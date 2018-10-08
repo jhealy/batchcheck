@@ -132,7 +132,7 @@ namespace BatchCheckUWP
                 TextBox_JobID.Text = jobid;
                 TextBox_Task.Text = taskid;
 
-                sb.AppendLine("task submitted.  use joba status button to see job and task checks");
+                sb.AppendLine("task submitted.  use job status button to see job and task checks");
 
                 TextBlock_Out.Text = sb.ToString();
             }
@@ -159,39 +159,43 @@ namespace BatchCheckUWP
             {
                 string jobid = TextBox_JobID.Text.Trim();
 
+                CloudJob job = null;
                 sb.AppendLine($"GetJob({jobid})");
-                CloudJob job = await client.JobOperations.GetJobAsync(jobid);
+                try
+                {
+                    job = await client.JobOperations.GetJobAsync(jobid);
+                }
+                catch ( Exception ex )
+                {
+                    job = null;
+                    sb.AppendLine($"job not found.  jobid=[{jobid}]");
+                    sb.AppendLine("job not found exception: " + ex.ToString());
+                }
 
                 if (job != null)
                 {
-                    TimeSpan wcu;
-
-                    try
-                    {
-                        wcu = job.Statistics.WallClockTime;
+                    TimeSpan? jobdur = job.ExecutionInformation.EndTime - job.ExecutionInformation.StartTime;
+                    if ( jobdur==null )
+                    { 
+                        sb.AppendLine($"job state:{job.State} ");
                     }
-                    catch
+                    else
                     {
-                        wcu = TimeSpan.MinValue;
+                        sb.AppendLine($"job state:{job.State} duration: {jobdur}");
                     }
 
-                    sb.AppendLine($"job state:{job.State} wallclocktime: {wcu}");
                     foreach (CloudTask t in job.ListTasks())
                     {
-                        try
+                        TimeSpan? dur = t.ExecutionInformation.EndTime - t.ExecutionInformation.StartTime;
+                        if (dur == null)
                         {
-                            wcu = t.Statistics.WallClockTime;
+                            sb.AppendLine($"task: {t.Id} {t.State} start: {t.ExecutionInformation.StartTime} end:{t.ExecutionInformation.EndTime}");
                         }
-                        catch
+                        else
                         {
-                            wcu = TimeSpan.MinValue;
+                            sb.AppendLine($"task: {t.Id} {t.State} duration:{dur} start: {t.ExecutionInformation.StartTime} end:{t.ExecutionInformation.EndTime}");
                         }
-                        sb.AppendLine($"task: {t.Id} {t.State} {wcu}");
                     }
-                }
-                else
-                {
-                    sb.AppendLine("job not found");
                 }
             }
 
@@ -222,6 +226,73 @@ namespace BatchCheckUWP
                 }
             }
             TextBlock_Out.Text = sb.ToString();
+        }
+
+        private async void Button_JobB_Click(object sender, RoutedEventArgs e)
+        {
+            const string DQUOTE = "\"";
+
+            string jobb_task_cmdline = $"cmd /c {DQUOTE}set AZ_BATCH & timeout /t 30 > NUL{DQUOTE}";
+
+            StringBuilder sb = new StringBuilder(1024);
+            sb.AppendLine("Submitting jobB - has 20 tasks in it");
+            string jobid = NamingHelpers.GenJobName("B");
+            sb.AppendLine($"jobid={jobid}");
+
+            sb.AppendLine($"task command line={jobb_task_cmdline}");
+
+            // read account settings, dump
+            AccountSettings accountSettings = SampleHelpers.LoadAccountSettings();
+
+            // read job settings, dump
+            JobSettings jobSettings = SampleHelpers.LoadJobSettings();
+
+            // connect to batch, dump status
+            BatchSharedKeyCredentials cred = new BatchSharedKeyCredentials(
+                accountSettings.BatchServiceUrl,
+                accountSettings.BatchAccountName,
+                accountSettings.BatchAccountKey
+            );
+
+            sb.AppendLine($"batchcred created to {accountSettings.BatchAccountName} at {accountSettings.BatchServiceUrl}");
+            using (BatchClient client = BatchClient.Open(cred))
+            {
+                PoolInformation pool = new PoolInformation();
+                pool.PoolId = jobSettings.PoolID;
+
+                sb.AppendLine("creating job " + jobid);
+                CloudJob ourJob = client.JobOperations.CreateJob(jobid, pool);
+                ourJob.OnAllTasksComplete = Microsoft.Azure.Batch.Common.OnAllTasksComplete.TerminateJob;
+
+                await ourJob.CommitAsync();
+                sb.AppendLine("job created " + jobid);
+
+                // Get the bound version of the job with all of its properties populated
+                CloudJob committedJob = await client.JobOperations.GetJobAsync(jobid);
+                sb.AppendLine("bound version of job retrieved " + jobid);
+
+                string taskid = "notset";
+                System.Collections.Generic.List<CloudTask> tasks = new System.Collections.Generic.List<CloudTask>();
+
+                for (int ii = 1; ii <= 20; ii++)
+                {
+                    taskid = NamingHelpers.GenTaskName("JOBB");
+                    sb.AppendLine("adding task " + taskid);
+
+                    // Create the tasks that the job will execute
+                    CloudTask task = new CloudTask(taskid, jobb_task_cmdline);
+                    tasks.Add(task);
+                }
+
+                sb.AppendLine("submitting tasks");
+                await client.JobOperations.AddTaskAsync(jobid, tasks);                
+                sb.AppendLine("task submitted.  use job status button to see job and task checks");
+
+                TextBox_JobID.Text = jobid;
+                TextBox_Task.Text = taskid;
+
+                TextBlock_Out.Text = sb.ToString();
+            }
         }
     }
 }

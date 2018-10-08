@@ -29,11 +29,14 @@
             <Button Width="100" x:Name="Button_JobA" Content="jobA subm" HorizontalAlignment="Center" Click="Button_JobA_Click" Margin="3" />
             <Button Width="100" x:Name="Button_ListJobs" Content="job list" HorizontalAlignment="Center" Click="Button_ListJobs_Click" Margin="3" />
             <Button Width="100" x:Name="Button_JobStatus" Content="job status" HorizontalAlignment="Center" Click="Button_JobStatus_Click" Margin="3" />
+            <Button Width="100" x:Name="Button_JobB" Content="jobB 20x" HorizontalAlignment="Center" Click="Button_JobB_Click" Margin="3" />
+            <Button Width="100" x:Name="Button_JobC" Content="jobC check" HorizontalAlignment="Center" Click="Button_JobC_Click" Margin="3" />
         </StackPanel>
         <StackPanel Grid.Row="1" Grid.Column="1" Background="Beige">
-            <ScrollViewer>
-                <TextBlock x:Name="TextBlock_Out" Text="output area" Margin="5" TextWrapping="Wrap"/>
+            <ScrollViewer VerticalScrollBarVisibility="Visible" Height="1000">
+                <TextBlock x:Name="TextBlock_Out" Text="output area" Margin="5" TextWrapping="Wrap" 
+                           IsTextSelectionEnabled="True" />
             </ScrollViewer>
-        </StackPanel>
+        </StackPanel> 
     </Grid>
 </Page>

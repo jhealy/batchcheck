@@ -110,6 +110,9 @@
     <Content Include="accountsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="accountsettings-template.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="BatchCheckUWP_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>

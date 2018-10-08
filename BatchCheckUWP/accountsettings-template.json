@@ -1,0 +1,9 @@
+{
+  "batchAccountName": "yourbatchservicename goes here",
+  "batchAccountKey": "batch account key here",
+  "batchServiceUrl": "your batch url",
+  "storageAccountName": "your batch storage account",
+  "storageAccountKey": "your batch storage account key",
+  "storageServiceUrl": "your batch storage service url something.core.windows.net",
+  "old_storageServiceUrl": "core.windows.net"
+}

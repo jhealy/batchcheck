@@ -1,9 +1,9 @@
 {
   "batchAccountName": "batchcalc",
-  "batchAccountKey": "SLR5KM9XPjrM23xWn6DdCYeqVD4bwPgM6Y8eduIGQfNO4eGV9yBMGEYhNVQsVRjo54Cf4paw3J0iCFpLY3+Q5A==",
+  "batchAccountKey": "dMz/Yfzjo+nkQNZV5NzI0TCLsZoYMUVn0VT36LAJ7e82KS7dCg2RPtMdNGzemlxVjZZLiOcS1yUM7skHOZGTfw==",
   "batchServiceUrl": "https://batchcalc.westus2.batch.azure.com",
   "storageAccountName": "batchcalcstorage",
-  "storageAccountKey": "U7dfwElo+ElWFLhIYEkI+g5IxS45nX89AlUEV3vOwywl9UHsCPmZIaXecGNDqeP0xjzkX68D/8/4cv12VQuJrw==",
+  "storageAccountKey": "hLi+E9Dd89szqozmWkdpmBDSU2b1Ry7bfnqHeXhCGdTz70SC6gkdsCxGBRyBf8aprRsAoMJzNLyBUZ9OBeeoEw==",
   "storageServiceUrl": "batchcalcstorage.core.windows.net",
   "old_storageServiceUrl": "core.windows.net"
 }
