@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -7,6 +8,7 @@ using System.Text;
 
 using Microsoft.Azure.Batch;
 using Microsoft.Azure.Batch.Auth;
+using System.Threading.Tasks;
 
 namespace BatchCheckUWP
 {
@@ -165,7 +167,7 @@ namespace BatchCheckUWP
                 {
                     job = await client.JobOperations.GetJobAsync(jobid);
                 }
-                catch ( Exception ex )
+                catch (Exception ex)
                 {
                     job = null;
                     sb.AppendLine($"job not found.  jobid=[{jobid}]");
@@ -175,8 +177,8 @@ namespace BatchCheckUWP
                 if (job != null)
                 {
                     TimeSpan? jobdur = job.ExecutionInformation.EndTime - job.ExecutionInformation.StartTime;
-                    if ( jobdur==null )
-                    { 
+                    if (jobdur == null)
+                    {
                         sb.AppendLine($"job state:{job.State} ");
                     }
                     else
@@ -285,7 +287,7 @@ namespace BatchCheckUWP
                 }
 
                 sb.AppendLine("submitting tasks");
-                await client.JobOperations.AddTaskAsync(jobid, tasks);                
+                await client.JobOperations.AddTaskAsync(jobid, tasks);
                 sb.AppendLine("task submitted.  use job status button to see job and task checks");
 
                 TextBox_JobID.Text = jobid;
@@ -293,6 +295,102 @@ namespace BatchCheckUWP
 
                 TextBlock_Out.Text = sb.ToString();
             }
+        }
+
+        private async void Button_JobC_Click(object sender, RoutedEventArgs e)
+        {
+            StringBuilder sb = new StringBuilder(1024);
+            sb.AppendLine("JobC will not run if A and B jobs are active");
+
+
+            // read account settings, dump
+            AccountSettings accountSettings = SampleHelpers.LoadAccountSettings();
+
+            // connect to batch, dump status
+            BatchSharedKeyCredentials cred = new BatchSharedKeyCredentials(
+                accountSettings.BatchServiceUrl,
+                accountSettings.BatchAccountName,
+                accountSettings.BatchAccountKey
+            );
+
+            sb.AppendLine($"batchcred created to {accountSettings.BatchAccountName} at {accountSettings.BatchServiceUrl}");
+            using (BatchClient client = BatchClient.Open(cred))
+            {
+                bool check = await ABCheck(client);
+                if (check == false)
+                {
+                    sb.AppendLine("An A or B job is still running.  C job cannot execute.");
+                }
+                else
+                {
+                    sb.AppendLine("No A or B jobs are running.");
+                    sb.AppendLine("We would kick off C at this point.  Bypassing for now.");
+                }
+                TextBlock_Out.Text = sb.ToString();
+            }
+
+        }
+
+        private async Task<bool> ABCheck(BatchClient client)
+        {
+            bool breturn = true;
+
+            if (client == null) throw new ApplicationException("ABCheck - batchclient was null");
+
+            // are any A or B jobs running?  If so write a message and get out
+            const string ACheck = "(state eq 'Active') and startswith(id, 'JOBA')";
+            const string BCheck = "(state eq 'Active') and startswith(id, 'JOBB')";
+
+            ODATADetailLevel detailLevel = new ODATADetailLevel();
+            detailLevel.FilterClause = ACheck;
+            detailLevel.SelectClause = "id, stats";
+            detailLevel.ExpandClause = "stats";
+
+            List<CloudJob> jobs = await client.JobOperations.ListJobs(detailLevel).ToListAsync();
+            if (jobs.Count > 0) return false;
+
+            detailLevel.FilterClause = BCheck;
+            jobs.Clear();
+            jobs = await client.JobOperations.ListJobs(detailLevel).ToListAsync();
+            if (jobs.Count > 0) return false;
+
+            return breturn;
+        }
+
+        private async void Button_KillJob_Click(object sender, RoutedEventArgs e)
+        {
+            string jobid = TextBox_JobID.Text.Trim();
+
+            StringBuilder sb = new StringBuilder(1024);
+            sb.AppendLine("Killing job# " + jobid);
+
+            // read account settings, dump
+            AccountSettings accountSettings = SampleHelpers.LoadAccountSettings();
+
+            // connect to batch, dump status
+            BatchSharedKeyCredentials cred = new BatchSharedKeyCredentials(
+                accountSettings.BatchServiceUrl,
+                accountSettings.BatchAccountName,
+                accountSettings.BatchAccountKey
+            );
+
+            sb.AppendLine($"batchcred created to {accountSettings.BatchAccountName} at {accountSettings.BatchServiceUrl}");
+            using (BatchClient client = BatchClient.Open(cred))
+            {
+                try
+                {
+                    sb.AppendLine("Attempting to delete job# " + jobid);
+                    await client.JobOperations.DeleteJobAsync(jobid);
+                    sb.AppendLine("success at deleting job# " + jobid);
+                }
+                catch (Exception ex)
+                {
+                    sb.Append("exception thrown.  jobid probably wasn't found.  jobid=" + jobid);
+                    sb.Append(ex.ToString());
+                }
+            } // batch client
+
+            TextBlock_Out.Text = sb.ToString();
         }
     }
 }

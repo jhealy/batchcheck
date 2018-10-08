@@ -31,6 +31,7 @@
             <Button Width="100" x:Name="Button_JobStatus" Content="job status" HorizontalAlignment="Center" Click="Button_JobStatus_Click" Margin="3" />
             <Button Width="100" x:Name="Button_JobB" Content="jobB 20x" HorizontalAlignment="Center" Click="Button_JobB_Click" Margin="3" />
             <Button Width="100" x:Name="Button_JobC" Content="jobC check" HorizontalAlignment="Center" Click="Button_JobC_Click" Margin="3" />
+            <Button Width="100" x:Name="Button_KillJob" Content="kill job" HorizontalAlignment="Center" Margin="3" Click="Button_KillJob_Click"/>
         </StackPanel>
         <StackPanel Grid.Row="1" Grid.Column="1" Background="Beige">
             <ScrollViewer VerticalScrollBarVisibility="Visible" Height="1000">
